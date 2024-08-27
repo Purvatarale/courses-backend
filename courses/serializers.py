@@ -7,8 +7,9 @@ class CourseSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CourseInstanceSerializer(serializers.ModelSerializer):
-    course = CourseSerializer(read_only=True)  # Nesting the CourseSerializer here
+    course_id = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all(), source='course')
+    course = CourseSerializer(read_only=True)  # Nesting the CourseSerializer for the response
 
     class Meta:
         model = CourseInstance
-        fields = '__all__'
+        fields = ['id', 'course_id', 'course', 'year', 'semester']
