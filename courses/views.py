@@ -6,6 +6,14 @@ from drf_yasg import openapi
 from .models import Course, CourseInstance
 from .serializers import CourseSerializer, CourseInstanceSerializer
 
+
+@swagger_auto_schema(
+    method='get',
+    responses={
+        200: openapi.Response('List of Courses', CourseSerializer(many=True)),
+    },
+    operation_description="List all available courses",
+)
 @swagger_auto_schema(
     method='post',
     request_body=CourseSerializer,
@@ -15,30 +23,18 @@ from .serializers import CourseSerializer, CourseInstanceSerializer
     },
     operation_description="Create a new course",
 )
-@api_view(['POST'])
-def create_course(request):
-    serializer = CourseSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-@swagger_auto_schema(
-    method='get',
-    responses={
-        200: openapi.Response('List of Courses', CourseSerializer(many=True))
-    },
-    operation_description="List all available courses",
-)
-@api_view(['GET'])
-def list_courses(request):
-    courses = Course.objects.all()
-    serializer = CourseSerializer(courses, many=True)
-    return Response(serializer.data)
-
-
+@api_view(['GET','POST'])
+def list_courses_or_create(request):
+    if request.method == 'POST':
+        serializer = CourseSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        courses = Course.objects.all()
+        serializer = CourseSerializer(courses, many=True)
+        return Response(serializer.data)
 
 @swagger_auto_schema(
     method='get',
@@ -139,14 +135,13 @@ def list_course_instances(request, year, semester):
     operation_description="Get details of a specific course instance by year, semester, and course ID",
 )
 @api_view(['GET'])
-def course_instance_detail(request, year, semester, instance_id):
+def course_instance_detail(request, year, semester, course_id):
     try:
-        instance = CourseInstance.objects.get(year=year, semester=semester, instance_id=instance_id)
+        instance = CourseInstance.objects.get(year=year, semester=semester, course_id=course_id)
     except CourseInstance.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = CourseInstanceSerializer(instance)
     return Response(serializer.data)
-
 
 
 @swagger_auto_schema(
@@ -163,9 +158,9 @@ def course_instance_detail(request, year, semester, instance_id):
     operation_description="Delete a specific course instance by year, semester, and course ID",
 )
 @api_view(['DELETE'])
-def delete_course_instance(request, year, semester, instance_id):
+def delete_course_instance(request, year, semester, course_id):
     try:
-        instance = CourseInstance.objects.get(year=year, semester=semester, instance_id=instance_id)
+        instance = CourseInstance.objects.get(year=year, semester=semester, course_id=course_id)
     except CourseInstance.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     instance.delete()

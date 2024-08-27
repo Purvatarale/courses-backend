@@ -7,6 +7,8 @@ class CourseSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CourseInstanceSerializer(serializers.ModelSerializer):
+    course = CourseSerializer(read_only=True)  # Nesting the CourseSerializer here
+
     class Meta:
         model = CourseInstance
         fields = '__all__'
